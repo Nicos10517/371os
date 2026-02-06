@@ -1,3 +1,7 @@
+fn main(){
+    println!("Hello World!");
+}
+/*
 use malloc::*; // crate name
 
 fn main() {
@@ -32,4 +36,4 @@ fn main() {
     //  - Gets to uninitialized memory should fail
     //  - You should write free()
     // No graceful way to autotest these. Left as an exercise to the interested student.
-}
+}*/
