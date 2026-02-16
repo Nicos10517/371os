@@ -20,17 +20,27 @@ fn main() -> io::Result<()> {
     //Makes it easier to check length
     let args: Vec<String> = env::args().collect();
 
+    let mut show_lines = false;
+    let mut show_words = false;
+    let mut show_bytes = false;
+    let mut filename: Option<&String> = None;
+
     //Check arguments (what's typed in terminal)
-    if args.len() <2 {
-        println!("Usage: {} [-l] <filename>", args[0]);
-        return Ok(());
+    for arg in args.iter().skip(1) {
+        if arg == "-l" {show_lines = true;continue}
+        if arg == "-w" {show_words = true;continue}
+        if arg == "-c" {show_bytes = true;continue}
+
+        filename = Some(arg);
     }
-
-    let lines_only = args.contains(&"-l".to_string());
-
     //find filename
-    let filename = &args[args.len()-1];
-
+    
+    if !show_lines && !show_words && !show_bytes {
+        show_lines = true;
+        show_words = true;
+        show_bytes = true;
+    }
+      
     /*
     //Reads the file name
     //Nth(1) to skip the program name
@@ -48,13 +58,10 @@ fn main() -> io::Result<()> {
     */
     
     //Open File and read it w/BufReader, prevents too many system calls
-
-    let file = File::open(filename)?;
+    //
+    let target = filename.expect("Usage: cargo run -- [flags] <filename>");
+    let file = File::open(target)?;
     let mut reader = BufReader::new(file);
-
-    let mut line_count = 0;
-    let mut word_count = 0;
-    let mut byte_count = 0;
 
     
 
@@ -62,6 +69,10 @@ fn main() -> io::Result<()> {
     //Reusing the same string memory faster than creating new one
     
     let mut line = String::new();
+    let mut line_count = 0;
+    let mut word_count = 0;
+    let mut byte_count = 0;
+
 
 
 
@@ -70,11 +81,8 @@ fn main() -> io::Result<()> {
     
     while reader.read_line(&mut line)? > 0 {
         line_count += 1;
-        
-        if !lines_only {
-            byte_count += line.len()+1;
-            word_count += line.split_whitespace().count();
-        }
+        byte_count += line.len();
+        word_count += line.split_whitespace().count();
         line.clear();
     }
 
@@ -85,11 +93,11 @@ fn main() -> io::Result<()> {
     //{:x} Prints a number in Hexadecimal
     //etc.
 
-    if lines_only {
-        println!("{}\t{}", line_count, filename);
-    } else {
-        println!("{}\t{}\t{}\t{}", line_count, word_count, byte_count, filename);
-    }
+    let mut output = String::new();
+    if show_lines {output.push_str(&format!("{}\t",line_count));}
+    if show_words {output.push_str(&format!("{}\t", word_count));}
+    if show_bytes {output.push_str(&format!("{}\t", byte_count));}
+    println!("{}{}", output, target);
 
    Ok(())
 }
