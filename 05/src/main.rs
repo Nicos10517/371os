@@ -1,23 +1,19 @@
-fn main() {
-
-    println!("Hello World");
-
-}
+// main.rs
 
 
-/*
 #![no_main] //Tells Rust not to use the standard library
 #![no_std] //Tells Rust not using standard "startup code"
            
 //This problem is essentially moving us from Normal rust to OS rust
 
-use core::panic::PanicInfo;
-
-#[no_mangle] //Forbidding Rust from changing name of function
+#[unsafe(no_mangle)] //Forbidding Rust from changing name of function
 
 pub extern "C" fn _start() -> ! {
+
     loop{} //Infinite loop
 }
+
+use core::panic::PanicInfo; 
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
