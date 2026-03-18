@@ -13,6 +13,6 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
-    colors::colors();
+    colors::image();
     loop{}
 }
