@@ -6,6 +6,12 @@ const COLS: usize = 25;
 const MAX: usize = ROWS * COLS;
 use core::fmt;
 
+pub fn reset() {
+    unsafe {
+        LATEST = 0;
+    }
+}
+
 pub fn char_to_vga(a: u8){
     unsafe {
         let rel: *mut u8 = (MMIO + (LATEST * 2)) as *mut u8;
