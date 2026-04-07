@@ -9,7 +9,7 @@ pub mod serial;
 pub const QEMU_PASS: u32 = 0xA;
 pub const QEMU_FAIL: u32 = 0xB;
 
-pub fn exit_qemu(code: u32) -> ! {
+pub fn qemu_quit(code: u32) -> ! {
     unsafe {
         x86_64::instructions::port::Port::new(0xf4).write(code);
     }
@@ -20,7 +20,7 @@ pub fn test_panic_handler(info: &core::panic::PanicInfo) -> ! {
     serial_println!("[Fail]");
     serial_println!("{}", info);
 
-    exit_qemu(QEMU_FAIL);
+    qemu_quit(QEMU_FAIL);
 }
 
 
@@ -31,13 +31,13 @@ pub fn _test_runner(tests: &[&dyn Fn()]) {
         serial_println!(" [Pass]");
     }
 
-    exit_qemu(QEMU_PASS);
+    qemu_quit(QEMU_PASS);
 }
 
 #[cfg(test)]
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
-    exit_qemu(QEMU_PASS);
+    qemu_quit(QEMU_PASS);
 }
 
 #[cfg(test)]
