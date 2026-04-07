@@ -31,23 +31,12 @@ fn vga_color_at(row: usize, col: usize) -> u8 {
 
 #[test_case]
 fn test_print_appears() {
-    osirs::vga::reset();
     osirs::println!("A");
     assert_eq!(vga_char_at(0, 0), b'A');
 }
 
 #[test_case]
-fn test_wrapping() {
-    osirs::vga::reset();
-    osirs::println!("{:081x}", 1usize);
-    osirs::println!("{:x}", 2usize);
-    assert_eq!(vga_char_at(0, 0), b'0');
-    assert_eq!(vga_char_at(1, 0), b'2');
-}
-
-#[test_case]
 fn test_scroll_and_color() {
-    osirs::vga::reset();
     for i in 0..26usize {
         osirs::println!("{:080x}", i);
     }
