@@ -7,7 +7,6 @@
 fn test_panic(_info: &core::panic::PanicInfo) -> ! {
     osirs::serial_println!("[Pass]");
     osirs::qemu_quit(osirs::QEMU_PASS);
-    loop {}
 }
 
 fn bad() {
@@ -18,5 +17,4 @@ fn bad() {
 pub extern "C" fn _start() -> ! {
     osirs::_test_runner(&[&bad]);
     osirs::qemu_quit(osirs::QEMU_FAIL);
-    loop {}
 }
