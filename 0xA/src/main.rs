@@ -18,6 +18,7 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
     osirs::test_panic_handler(info);
+    osirs::halt();
 }
 
 
@@ -25,6 +26,7 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 pub extern "C" fn _start() -> ! {
 
     osirs::init();
+    osirs::halt();
     
     #[cfg(test)]
     test_main();

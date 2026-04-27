@@ -13,6 +13,11 @@ pub mod gdt;
 pub const QEMU_PASS: u32 = 0xA;
 pub const QEMU_FAIL: u32 = 0xB;
 
+pub fn halt() {
+    loop { x86_64::instructions::hlt(); }
+
+}
+
 pub fn init() {
     interrupts::init_idt();
     gdt::init_gdt();
