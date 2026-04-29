@@ -2,6 +2,7 @@
 #![no_main]
 #![feature(custom_test_frameworks)]
 #![test_runner(osirs::_test_runner)]
+#![reexport_test_harness_main = "test_main"]
 
 #[panic_handler]
 fn test_panic(_info: &core::panic::PanicInfo) -> ! {
@@ -9,6 +10,7 @@ fn test_panic(_info: &core::panic::PanicInfo) -> ! {
     osirs::serial_println!("[Pass]");
     osirs::qemu_quit(osirs::QEMU_PASS);
 }
+
 
 fn bad() {
     unsafe { *(0xdeadbeef as *mut u8) = 42; };

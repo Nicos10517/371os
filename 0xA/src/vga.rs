@@ -1,8 +1,8 @@
 pub static mut LATEST: usize = 0;
 const MMIO: usize = 0xb8000;
 const COLOR: u8 = 0xF;
-const ROWS: usize = 80;
-const COLS: usize = 25;
+const ROWS: usize = 25;
+const COLS: usize = 80;
 const MAX: usize = ROWS * COLS;
 use core::fmt;
 

@@ -4,7 +4,11 @@ use lazy_static::lazy_static;
 use pic8259::ChainedPics;
 
 use crate::print;
-use x86_64::{instructions::{port::Port}, structures::idt::InterruptStackFrame};
+use crate::println;
+use x86_64::structures::idt::InterruptStackFrame;
+use crate::timer::get_timer;
+
+
 
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
@@ -57,6 +61,9 @@ extern "x86-interrupt" fn double_fault_handler ( stack_frame: x86_64::structures
 
 extern "x86-interrupt" fn timer_handler (_stack_frame: x86_64::structures::idt::InterruptStackFrame) {
     /*crate::println!("INTERRUPT: TIMER \n{:#?}", stack_frame);*/
+    let timer = get_timer();
+    timer.tick();
+    println!("{timer}");
     unsafe { PICS.notify_end_of_interrupt(InterruptIndex::Timer as u8) };
 }
 
