@@ -41,7 +41,7 @@ pub fn str_to_vga(s: &str){
 
     unsafe {
         for i in 0..v.len() {
-            if LATEST > MAX {
+            if LATEST >= MAX {
                 scroll();
             }
 

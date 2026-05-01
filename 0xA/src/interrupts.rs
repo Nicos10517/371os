@@ -7,6 +7,10 @@ use crate::print;
 use crate::println;
 use x86_64::structures::idt::InterruptStackFrame;
 use crate::timer::get_timer;
+use crate::timer::INDEX;
+use crate::timer::init_timer;
+use crate::timer::CHARS;
+use pc_keyboard::KeyState;
 
 
 
@@ -59,21 +63,28 @@ extern "x86-interrupt" fn double_fault_handler ( stack_frame: x86_64::structures
     panic!("EXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);
 }
 
+const TICK_PER_SEC: usize = 16;
+static mut COUNT: usize = TICK_PER_SEC - 1;
+
 extern "x86-interrupt" fn timer_handler (_stack_frame: x86_64::structures::idt::InterruptStackFrame) {
-    /*crate::println!("INTERRUPT: TIMER \n{:#?}", stack_frame);*/
-    let timer = get_timer();
-    timer.tick();
-    println!("{timer}");
+    if unsafe { INDEX } < 6 {
+        unsafe {PICS.notify_end_of_interrupt(InterruptIndex::Timer as u8)};
+        return;
+    }
+    unsafe {COUNT += 1; COUNT %= 16;}
+    if unsafe { COUNT } == 0 {
+        let timer = get_timer();
+        timer.tick();
+        println!("{timer}");
+    }
     unsafe { PICS.notify_end_of_interrupt(InterruptIndex::Timer as u8) };
 }
-
 
 
 extern "x86-interrupt" fn keyboard_handler(_stack_frame: InterruptStackFrame) {
     use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
     use spin::Mutex;
     use x86_64::instructions::port::Port;
-
     lazy_static! {
         static ref KEYBOARD: Mutex<Keyboard<layouts::Us104Key, ScancodeSet1>> =
             Mutex::new(Keyboard::new(ScancodeSet1::new(),
@@ -85,17 +96,43 @@ extern "x86-interrupt" fn keyboard_handler(_stack_frame: InterruptStackFrame) {
     let mut port = Port::new(0x60);
 
     let scancode: u8 = unsafe { port.read() };
-    if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
-        if let Some(key) = keyboard.process_keyevent(key_event) {
-            match key {
-                DecodedKey::Unicode(character) => print!("{}", character),
-                DecodedKey::RawKey(key) => print!("{:?}", key),
-            }
-        }
-    }
+
     unsafe {
+        if INDEX < 6 { 
+            if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
+                let state = key_event.state;
+                if let Some(key) = keyboard.process_keyevent(key_event) {
+                    match key {
+                        DecodedKey::Unicode(character) => CHARS[INDEX] = character as u8,
+                        DecodedKey::RawKey(_key) => return,
+                    }
+                }
+
+                if INDEX == 5 && KeyState::Down == state {
+                    init_timer();
+                }
+
+                if state == KeyState::Down {
+                    INDEX += 1;
+                }
+            } 
+            PICS.notify_end_of_interrupt(InterruptIndex::Keyboard as u8);
+            return;
+        } 
+
+        if INDEX == 6 {
+            if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
+                if let Some(key) = keyboard.process_keyevent(key_event) {
+                    match key {
+                        DecodedKey::Unicode(character) => print!("{}", character),
+                        DecodedKey::RawKey(_key) => (), // print!("{:?}", key),
+                    }
+                }
+            }
+        } 
         PICS.notify_end_of_interrupt(InterruptIndex::Keyboard as u8);
-    }
+    } 
+   
 }
 
 
