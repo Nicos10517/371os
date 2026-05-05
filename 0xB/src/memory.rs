@@ -1,6 +1,33 @@
 use x86_64::structures::paging::PageTable;
+use x86_64::structures::paging::PhysFrame;
+use x86_64::PhysAddr;
+use bootloader::bootinfo::MemoryRegionType;
 
+pub struct BootInfoFrameAllocator {
+    memory_map: &'static bootloader::bootinfo::MemoryMap,
+    next: usize,
+}
 
+impl BootInfoFrameAllocator {
+    pub unsafe fn init(memory_map: &'static bootloader::bootinfo::MemoryMap) -> Self {
+        BootInfoFrameAllocator {
+            memory_map,
+            next: 0,
+        }
+    }
+
+    fn usable_frames(&self) -> impl Iterator<Item = PhysFrame> {
+        // get usable regions from memory map
+        let regions = self.memory_map.iter();
+        let usable_regions = regions.filter(|r| r.region_type == MemoryRegionType::Usable);
+        // map each region to its address range
+        let addr_ranges = usable_regions.map(|r| r.range.start_addr()..r.range.end_addr());
+        // transform to an iterator of frame start addresses
+        let frame_addresses = addr_ranges.flat_map(|r| r.step_by(4096));
+        // create `PhysFrame` types from the start addresses
+        frame_addresses.map(|addr| PhysFrame::containing_address(PhysAddr::new(addr)))
+    }
+}
 
 pub unsafe fn active_level_4_table(offset: x86_64::VirtAddr)
 -> &'static mut x86_64::structures::paging::PageTable
@@ -61,14 +88,13 @@ pub fn create_example_mapping(
     map_to_result.expect("map_to failed").flush();
 }
 
-pub struct EmptyFrameAllocator;
 
 unsafe impl x86_64::structures::paging::FrameAllocator<x86_64::structures::paging::Size4KiB>
-    for EmptyFrameAllocator
+    for BootInfoFrameAllocator
 {
     fn allocate_frame(&mut self) -> Option<x86_64::structures::paging::PhysFrame> {
-        None
+        let frame = self.usable_frames().nth(self.next);
+        self.next += 1;
+        frame
     }
 }
-
-

@@ -29,7 +29,7 @@ pub extern "C" fn _start(boot_info: &'static bootloader::BootInfo) -> ! {
 
     let offset = x86_64::VirtAddr::new(boot_info.physical_memory_offset);
     let mut mapper = unsafe { osirs::memory::init(offset) };
-    let mut frame_allocator = osirs::memory::EmptyFrameAllocator;
+    let mut frame_allocator = unsafe { osirs::memory::BootInfoFrameAllocator::init(&boot_info.memory_map) };
 
     // map an unused page
     let page = x86_64::structures::paging::Page::containing_address(x86_64::VirtAddr::new(0));
