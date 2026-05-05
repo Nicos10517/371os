@@ -6,7 +6,7 @@
 #![allow(static_mut_refs)]
 
 mod vga;
-
+extern crate alloc;
 
 
 #[cfg(not(test))]
@@ -27,17 +27,14 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 #[unsafe(no_mangle)]
 pub extern "C" fn _start(boot_info: &'static bootloader::BootInfo) -> ! {
 
+    osirs::init();
     let offset = x86_64::VirtAddr::new(boot_info.physical_memory_offset);
     let mut mapper = unsafe { osirs::memory::init(offset) };
-    let mut frame_allocator = unsafe { osirs::memory::BootInfoFrameAllocator::init(&boot_info.memory_map) };
+    let mut frame_allocator =
+        unsafe { osirs::memory::BootInfoFrameAllocator::init(&boot_info.memory_map) };
+    osirs::allocator::init_heap(&mut mapper, &mut frame_allocator).unwrap();
 
-    // map an unused page
-    let page = x86_64::structures::paging::Page::containing_address(x86_64::VirtAddr::new(0));
-    osirs::memory::create_example_mapping(page, &mut mapper, &mut frame_allocator);
-
-    // write the string `New!` to the screen through the new mapping
-    let ptr: *mut u64 = page.start_address().as_mut_ptr();
-    unsafe { ptr.write_volatile(0x_f021_f077_f065_f04e) };
+    println!("Hello world{}", "!");
         
     /*osirs::halt();*/
     

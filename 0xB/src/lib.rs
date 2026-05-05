@@ -11,6 +11,9 @@ pub mod interrupts;
 pub mod gdt;
 pub mod timer;
 pub mod memory;
+pub mod allocator;
+
+extern crate alloc;
 
 pub const QEMU_PASS: u32 = 0xA;
 pub const QEMU_FAIL: u32 = 0xB;
