@@ -1,23 +1,11 @@
 #[global_allocator]
-static ALLOCATOR: Dummy = Dummy;
-
-pub struct Dummy;
+static ALLOCATOR: linked_list_allocator::LockedHeap = linked_list_allocator::LockedHeap::empty();
 
 use alloc::alloc::{GlobalAlloc, Layout};
 use core::ptr::null_mut;
 
 pub const HEAP_START: usize = 0x_C371_0000; // CS-371
 pub const HEAP_SIZE: usize = 1 << 16;  // Arbitrary
-
-unsafe impl alloc::alloc::GlobalAlloc for Dummy {
-    unsafe fn alloc(&self, _layout: alloc::alloc::Layout) -> *mut u8 {
-        core::ptr::null_mut()
-    }
-
-    unsafe fn dealloc(&self, _ptr: *mut u8, _layout: alloc::alloc::Layout) {
-        panic!("dealloc should be never called")
-    }
-}
 
 pub fn init_heap(
     mapper: &mut impl x86_64::structures::paging::Mapper<x86_64::structures::paging::Size4KiB>,
@@ -44,9 +32,26 @@ pub fn init_heap(
             match mapper.map_to(page, frame, flags, frame_allocator) {
                 Ok(m) => m.flush(),
                 _ => return None,
-            };
+            
+            }; 
         }
     }
 
+    unsafe {
+        ALLOCATOR.lock().init(HEAP_START, HEAP_SIZE);
+    }
+
     return Some(());
+}
+
+pub struct Dummy;
+
+unsafe impl GlobalAlloc for Dummy {
+    unsafe fn alloc(&self, _layout: alloc::alloc::Layout) -> *mut u8 {
+        core::ptr::null_mut()
+    }
+
+    unsafe fn dealloc(&self, _ptr: *mut u8, _layout: alloc::alloc::Layout) {
+        panic!("dealloc should be never called")
+    }
 }

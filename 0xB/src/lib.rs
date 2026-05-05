@@ -4,6 +4,15 @@
 #![test_runner(_test_runner)]
 #![feature(abi_x86_interrupt)]
 #![reexport_test_harness_main = "test_main"]
+#![allow(static_mut_refs)]
+#![allow(warnings)]
+
+use crate::memory::BootInfoFrameAllocator;
+use core::panic::PanicInfo;
+use x86_64::instructions::port::Port;
+
+
+extern crate alloc;
 
 pub mod vga;
 pub mod serial;
@@ -13,15 +22,11 @@ pub mod timer;
 pub mod memory;
 pub mod allocator;
 
-extern crate alloc;
+
 
 pub const QEMU_PASS: u32 = 0xA;
 pub const QEMU_FAIL: u32 = 0xB;
 
-pub fn halt() {
-    loop { x86_64::instructions::hlt(); }
-
-}
 
 pub fn init() {
     interrupts::init_idt();
@@ -33,6 +38,11 @@ pub fn qemu_quit(code: u32) -> ! {
         x86_64::instructions::port::Port::new(0xf4).write(code);
     }
     loop{}
+}
+
+pub fn halt() {
+    loop { x86_64::instructions::hlt(); }
+
 }
 
 pub fn test_panic_handler(info: &core::panic::PanicInfo) -> ! {
